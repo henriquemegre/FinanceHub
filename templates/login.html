@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Entrar | FinanceHub</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        href="{{ url_for('static', filename='styles.css') }}"
+        rel="stylesheet"
+    >
+
+    <style>
+        body {
+            min-height: 100vh;
+            background: #0f172a;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-logo {
+            color: #2563eb;
+            font-size: 32px;
+            font-weight: 750;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-title {
+            font-size: 26px;
+            font-weight: 750;
+            text-align: center;
+        }
+
+        .auth-subtitle {
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+        }
+
+        .auth-footer a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="auth-container">
+
+        <div class="auth-card">
+
+            <!-- LOGO -->
+
+            <div class="auth-logo">
+                <i class="bi bi-wallet2 me-2"></i>
+                FinanceHub
+            </div>
+
+            <!-- HEADER -->
+
+            <h1 class="auth-title">
+                Bem-vindo de volta
+            </h1>
+
+            <p class="auth-subtitle">
+                Entre na sua conta para acessar suas finanças.
+            </p>
+
+            <!-- MESSAGES -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% for category, message in messages %}
+
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endwith %}
+
+            <!-- LOGIN FORM -->
+
+            <form action="/login" method="post">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-4">
+
+                    <label for="username" class="form-label fw-semibold">
+                        Nome de usuário
+                    </label>
+
+                    <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        class="finance-input"
+                        placeholder="Digite seu usuário"
+                        autocomplete="username"
+                        required
+                        autofocus
+                    >
+
+                </div>
+
+                <div class="mb-4">
+
+                    <label for="password" class="form-label fw-semibold">
+                        Senha
+                    </label>
+
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        class="finance-input"
+                        placeholder="Digite sua senha"
+                        autocomplete="current-password"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit" class="btn-finance w-100">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                    Entrar na minha conta
+                </button>
+
+            </form>
+
+            <!-- REGISTER LINK -->
+
+            <div class="auth-footer">
+
+                Não possui uma conta?
+
+                <a href="/register">
+                    Criar conta
+                </a>
+
+            </div>
+
+            <div class="text-center mt-4">
+
+                <a href="/" class="text-muted small text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Voltar à página inicial
+                </a>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</body>
+</html>

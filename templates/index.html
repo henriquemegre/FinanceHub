@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FinanceHub | Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Bootstrap Icons -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- FinanceHub CSS -->
+    <link
+        href="{{ url_for('static', filename='styles.css') }}"
+        rel="stylesheet"
+    >
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-description {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .chart-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .filter-panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 25px;
+        }
+
+        .filter-select {
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            padding: 10px 12px;
+            background: white;
+            min-width: 140px;
+        }
+
+        .period-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 260px;
+            }
+
+            .filter-select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+{% if session.get("user_id") %}
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <a href="/" class="sidebar-brand">
+            <i class="bi bi-wallet2 me-2"></i>
+            FinanceHub
+        </a>
+
+        <nav>
+
+            <a href="/" class="sidebar-link active">
+                <i class="bi bi-grid-1x2 me-2"></i>
+                Dashboard
+            </a>
+
+            <a href="/history" class="sidebar-link">
+                <i class="bi bi-arrow-left-right me-2"></i>
+                Movimentações
+            </a>
+
+            <a href="/transaction" class="sidebar-link">
+                <i class="bi bi-plus-circle me-2"></i>
+                Nova movimentação
+            </a>
+
+        </nav>
+
+
+            <a href="/reports" class="sidebar-link">
+                <i class="bi bi-bar-chart-line me-2"></i>
+                Relatórios
+            </a>
+
+        <div class="sidebar-footer">
+
+            <div class="text-white-50 small mb-3">
+                <i class="bi bi-person-circle me-2"></i>
+                {{ session.get("username") }}
+            </div>
+
+            <a href="/logout" class="sidebar-link">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Sair da conta
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN CONTENT -->
+
+    <main class="dashboard-main">
+
+        <!-- ALERTS -->
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+
+        <!-- HEADER -->
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+            <div>
+
+                <h1 class="page-heading">
+                    Visão geral
+                </h1>
+
+                <p class="page-subtitle mb-0">
+                    Bem-vindo de volta, {{ session.get("username") }}!
+                    Acompanhe suas finanças em um só lugar.
+                </p>
+
+            </div>
+
+            <a href="/transaction" class="btn-finance">
+                <i class="bi bi-plus-lg me-2"></i>
+                Nova movimentação
+            </a>
+
+        </div>
+
+
+        <!-- PERIOD FILTER -->
+
+        <div class="filter-panel">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+
+                <div>
+
+                    <h2 class="panel-title mb-1">
+                        <i class="bi bi-calendar3 me-2"></i>
+                        Período financeiro
+                    </h2>
+
+                    <p class="period-label mb-0">
+                        Exibindo: <strong>{{ period_label }}</strong>
+                    </p>
+
+                </div>
+
+                <a href="/" class="btn-finance-outline">
+                    <i class="bi bi-arrow-clockwise me-2"></i>
+                    Mês atual
+                </a>
+
+            </div>
+
+            <form action="/" method="get">
+
+                <div class="d-flex flex-wrap align-items-end gap-3">
+
+                    <!-- MONTH -->
+
+                    <div>
+
+                        <label for="month" class="form-label fw-semibold">
+                            Mês
+                        </label>
+
+                        <select
+                            id="month"
+                            name="month"
+                            class="filter-select"
+                        >
+
+                            {% set months = [
+                                "Janeiro",
+                                "Fevereiro",
+                                "Março",
+                                "Abril",
+                                "Maio",
+                                "Junho",
+                                "Julho",
+                                "Agosto",
+                                "Setembro",
+                                "Outubro",
+                                "Novembro",
+                                "Dezembro"
+                            ] %}
+
+                            {% for month_name in months %}
+
+                                <option
+                                    value="{{ loop.index }}"
+                                    {% if selected_month == loop.index %}selected{% endif %}
+                                >
+                                    {{ month_name }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- YEAR -->
+
+                    <div>
+
+                        <label for="year" class="form-label fw-semibold">
+                            Ano
+                        </label>
+
+                        <select
+                            id="year"
+                            name="year"
+                            class="filter-select"
+                        >
+
+                            {% for year in range(current_year - 5, current_year + 2) %}
+
+                                <option
+                                    value="{{ year }}"
+                                    {% if selected_year == year %}selected{% endif %}
+                                >
+                                    {{ year }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- APPLY FILTER -->
+
+                    <button type="submit" class="btn-finance">
+                        <i class="bi bi-funnel me-2"></i>
+                        Aplicar filtro
+                    </button>
+
+
+                    <!-- ALL PERIODS -->
+
+                    <a href="/?period=all" class="btn-finance-outline">
+                        <i class="bi bi-calendar-range me-2"></i>
+                        Todo o período
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- FINANCIAL SUMMARY -->
+
+        <div class="row g-4 mb-4">
+
+            <!-- BALANCE -->
+
+            <div class="col-lg-4 col-md-6">
+
+                <div class="finance-card">
+
+                    <div class="finance-card-label">
+                        <i class="bi bi-wallet2 me-2"></i>
+                        Saldo do período
+                    </div>
+
+                    <div class="finance-card-value">
+                        {{ balance }}
+                    </div>
+
+                    <p class="finance-card-description">
+                        Receitas menos despesas
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- INCOME -->
+
+            <div class="col-lg-4 col-md-6">
+
+                <div class="finance-card">
+
+                    <div class="finance-card-label">
+                        <i class="bi bi-arrow-down-left-circle me-2"></i>
+                        Total de receitas
+                    </div>
+
+                    <div class="finance-card-value value-success">
+                        {{ income }}
+                    </div>
+
+                    <p class="finance-card-description">
+                        Entradas no período selecionado
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXPENSES -->
+
+            <div class="col-lg-4 col-md-6">
+
+                <div class="finance-card">
+
+                    <div class="finance-card-label">
+                        <i class="bi bi-arrow-up-right-circle me-2"></i>
+                        Total de despesas
+                    </div>
+
+                    <div class="finance-card-value value-danger">
+                        {{ expenses }}
+                    </div>
+
+                    <p class="finance-card-description">
+                        Saídas no período selecionado
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FINANCIAL CHARTS -->
+
+        <div class="row g-4 mb-4">
+
+            <!-- INCOME VS EXPENSES -->
+
+            <div class="col-lg-6">
+
+                <div class="content-panel h-100">
+
+                    <h2 class="panel-title">
+                        Receitas x Despesas
+                    </h2>
+
+                    <p class="chart-description">
+                        Comparação das entradas e saídas no período selecionado.
+                    </p>
+
+                    <div class="chart-container">
+                        <canvas id="incomeExpenseChart"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXPENSES BY CATEGORY -->
+
+            <div class="col-lg-6">
+
+                <div class="content-panel h-100">
+
+                    <h2 class="panel-title">
+                        Despesas por categoria
+                    </h2>
+
+                    <p class="chart-description">
+                        Distribuição dos gastos no período selecionado.
+                    </p>
+
+                    {% if category_labels %}
+
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+
+                    {% else %}
+
+                        <div class="chart-empty">
+
+                            <div>
+
+                                <i class="bi bi-pie-chart fs-1"></i>
+
+                                <p class="mt-3">
+                                    Nenhuma despesa neste período.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FINANCIAL MANAGEMENT -->
+
+        <div class="row g-4">
+
+            <div class="col-lg-8">
+
+                <div class="content-panel h-100">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <h2 class="panel-title mb-0">
+                            Controle financeiro
+                        </h2>
+
+                        <i class="bi bi-graph-up-arrow text-primary fs-4"></i>
+
+                    </div>
+
+                    <p class="text-muted">
+                        Organize suas movimentações e acompanhe
+                        a evolução da sua vida financeira.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+
+                        <a href="/history" class="btn-finance-outline">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Ver histórico
+                        </a>
+
+                        <a href="/transaction" class="btn-finance">
+                            <i class="bi bi-plus-lg me-2"></i>
+                            Adicionar movimentação
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- QUICK ACCESS -->
+
+            <div class="col-lg-4">
+
+                <div class="content-panel h-100">
+
+                    <h2 class="panel-title mb-3">
+                        Acesso rápido
+                    </h2>
+
+                    <div class="d-grid gap-3">
+
+                        <a href="/transaction" class="btn-finance text-center">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Nova movimentação
+                        </a>
+
+                        <a href="/history" class="btn-finance-outline text-center">
+                            <i class="bi bi-list-ul me-2"></i>
+                            Histórico completo
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOTER -->
+
+        <footer class="mt-5 text-center text-muted small">
+            FinanceHub © 2026 — Controle financeiro pessoal
+        </footer>
+
+    </main>
+
+
+    <!-- FINANCIAL CHARTS JAVASCRIPT -->
+
+    <script>
+
+        // Data provided by Flask
+
+        const income = {{ chart_income | tojson }};
+        const expenses = {{ chart_expenses | tojson }};
+
+        const categoryLabels = {{ category_labels | tojson }};
+        const categoryValues = {{ category_values | tojson }};
+
+
+        // Brazilian currency formatter
+
+        const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
+
+
+        // Income vs Expenses Chart
+
+        const incomeExpenseCanvas = document.getElementById(
+            "incomeExpenseChart"
+        );
+
+        if (incomeExpenseCanvas && typeof Chart !== "undefined") {
+
+            new Chart(incomeExpenseCanvas, {
+
+                type: "bar",
+
+                data: {
+
+                    labels: ["Receitas", "Despesas"],
+
+                    datasets: [{
+
+                        label: "Valor",
+
+                        data: [income, expenses],
+
+                        backgroundColor: [
+                            "#16a34a",
+                            "#dc2626"
+                        ],
+
+                        borderRadius: 8,
+
+                        maxBarThickness: 100
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: false
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label: function(context) {
+                                    return currencyFormatter.format(
+                                        context.parsed.y
+                                    );
+                                }
+
+                            }
+
+                        }
+
+                    },
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true,
+
+                            ticks: {
+
+                                callback: function(value) {
+                                    return currencyFormatter.format(value);
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        }
+
+
+        // Expenses by Category Chart
+
+        const categoryCanvas = document.getElementById(
+            "categoryChart"
+        );
+
+        if (categoryCanvas && typeof Chart !== "undefined") {
+
+            new Chart(categoryCanvas, {
+
+                type: "doughnut",
+
+                data: {
+
+                    labels: categoryLabels,
+
+                    datasets: [{
+
+                        data: categoryValues,
+
+                        backgroundColor: [
+                            "#2563eb",
+                            "#16a34a",
+                            "#f59e0b",
+                            "#dc2626",
+                            "#8b5cf6",
+                            "#06b6d4",
+                            "#ec4899",
+                            "#64748b",
+                            "#14b8a6",
+                            "#f97316"
+                        ],
+
+                        borderWidth: 3,
+
+                        borderColor: "#ffffff",
+
+                        hoverOffset: 8
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: "65%",
+
+                    plugins: {
+
+                        legend: {
+
+                            position: "bottom",
+
+                            labels: {
+
+                                padding: 15,
+
+                                usePointStyle: true
+
+                            }
+
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                label: function(context) {
+
+                                    const value = context.parsed;
+
+                                    return (
+                                        context.label + ": " +
+                                        currencyFormatter.format(value)
+                                    );
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        }
+
+    </script>
+
+{% else %}
+
+    <!-- PUBLIC HOMEPAGE -->
+
+    <nav class="navbar navbar-dark" style="background: #0f172a;">
+
+        <div class="container">
+
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-wallet2 me-2"></i>
+                FinanceHub
+            </a>
+
+            <div>
+
+                <a href="/login" class="btn btn-outline-light btn-sm me-2">
+                    Entrar
+                </a>
+
+                <a href="/register" class="btn btn-primary btn-sm">
+                    Criar conta
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+    <main class="container py-5">
+
+        <div class="text-center py-5">
+
+            <h1 class="display-4 fw-bold">
+                Suas finanças, sob controle.
+            </h1>
+
+            <p class="lead text-muted mt-3">
+                Gerencie suas receitas, despesas e acompanhe
+                sua evolução financeira com o FinanceHub.
+            </p>
+
+            <div class="mt-4">
+
+                <a href="/register" class="btn-finance me-2">
+                    Começar agora
+                </a>
+
+                <a href="/login" class="btn-finance-outline">
+                    Já tenho uma conta
+                </a>
+
+            </div>
+
+        </div>
+
+    </main>
+
+{% endif %}
+
+</body>
+</html>

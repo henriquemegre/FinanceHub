@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+*_backup*
+templates_backup_*/
+
+# System and editor files
+.DS_Store
+.vscode/
+
+# Tests and cache
+.pytest_cache/
+.coverage
