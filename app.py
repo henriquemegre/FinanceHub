@@ -1,3 +1,10 @@
+# FinanceHub - CS50x 2026 Final Project
+# AI Assistance Disclosure:
+# ChatGPT (OpenAI) was used during the development of this project
+# to assist with code implementation, debugging, testing,
+# documentation, and security improvements.
+# The developer reviewed and tested the resulting application.
+
 import csv
 import io
 import os
